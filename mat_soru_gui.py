@@ -2,25 +2,28 @@
 Matematik Soru Hazırlayıcı - Tkinter GUI
 TYT/AYT seviyesinde matematik soruları üretip PDF olarak kaydetme aracı.
 """
+from __future__ import annotations
+
 import random
 import math
 import os
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
+from typing import Any, Callable, Dict, List, Tuple, Union
 
 try:
-    from fpdf import FPDF
+    from fpdf import FPDF  # type: ignore[import]
 except ImportError:
     import subprocess, sys
     subprocess.check_call([sys.executable, "-m", "pip", "install", "fpdf2"])
-    from fpdf import FPDF
+    from fpdf import FPDF  # type: ignore[import]
 
 
 # ═══════════════════════════════════════════════
 #  SORU ÜRETİCİ FONKSİYONLAR (Konu Bazlı)
 # ═══════════════════════════════════════════════
 
-def _fmt(text):
+def _fmt(text: str) -> str:
     """Türkçe karakter temizleme ve görsel düzeltmeler."""
     text = text.replace("+ (-", "- (").replace("+ -", "- ").replace("- -", "+ ")
     tr_map = {
@@ -33,7 +36,7 @@ def _fmt(text):
 
 
 # ── Temel İşlemler ──────────────────────────────
-def _temel_islemler(q_num):
+def _temel_islemler(q_num: int) -> Tuple[str, int, str]:
     typ = random.randint(1, 4)
     if typ == 1:
         a, b = random.randint(10, 999), random.randint(10, 999)
@@ -64,7 +67,7 @@ def _temel_islemler(q_num):
 
 
 # ── Sayılar ─────────────────────────────────────
-def _sayilar(q_num):
+def _sayilar(q_num: int) -> Tuple[str, int, str]:
     typ = random.randint(1, 3)
     if typ == 1:
         x = random.randint(10, 50)
@@ -94,7 +97,7 @@ def _sayilar(q_num):
 
 
 # ── 1. Derece Denklemler ────────────────────────
-def _birinci_derece(q_num):
+def _birinci_derece(q_num: int) -> Tuple[str, int, str]:
     typ = random.randint(1, 5)
     if typ == 1:
         a = random.randint(2, 10)
@@ -146,7 +149,7 @@ def _birinci_derece(q_num):
 
 
 # ── 2. Derece Denklemler ────────────────────────
-def _ikinci_derece(q_num):
+def _ikinci_derece(q_num: int) -> Tuple[str, int, str]:
     typ = random.randint(1, 4)
     if typ == 1:
         x1 = random.randint(-8, 8)
@@ -193,7 +196,7 @@ def _ikinci_derece(q_num):
 
 
 # ── Fonksiyonlar ────────────────────────────────
-def _fonksiyonlar(q_num):
+def _fonksiyonlar(q_num: int) -> Tuple[str, Any, str]:
     typ = random.randint(1, 5)
     if typ == 1:
         a = random.randint(1, 5)
@@ -248,7 +251,7 @@ def _fonksiyonlar(q_num):
 
 
 # ── Mutlak Değer ────────────────────────────────
-def _mutlak_deger(q_num):
+def _mutlak_deger(q_num: int) -> Tuple[str, Any, str]:
     typ = random.randint(1, 3)
     if typ == 1:
         a = random.randint(1, 5)
@@ -274,10 +277,11 @@ def _mutlak_deger(q_num):
             x1 = int(x1)
         if x2 == int(x2):
             x2 = int(x2)
+        total = x1 + x2
         if isinstance(x1, int) and isinstance(x2, int):
-            ans = x1 + x2
+            ans: Any = int(total)
         else:
-            ans = round(x1 + x2, 2)
+            ans = round(float(total), 2)
         q = f"{q_num}) |{a}x + ({b})| = {c} => koklerin toplami kactir?"
         sol = f"x1 = {x1}, x2 = {x2}\nToplam = {x1} + {x2} = {ans}"
         return q, ans, sol
@@ -290,7 +294,7 @@ def _mutlak_deger(q_num):
 
 
 # ── Üslü İfadeler ──────────────────────────────
-def _uslu_ifadeler(q_num):
+def _uslu_ifadeler(q_num: int) -> Tuple[str, int, str]:
     typ = random.randint(1, 4)
     if typ == 1:
         base = random.randint(2, 5)
@@ -326,7 +330,7 @@ def _uslu_ifadeler(q_num):
 
 
 # ── Köklü İfadeler ──────────────────────────────
-def _koklu_ifadeler(q_num):
+def _koklu_ifadeler(q_num: int) -> Tuple[str, int, str]:
     typ = random.randint(1, 4)
     if typ == 1:
         val = random.randint(1, 15)
@@ -363,7 +367,7 @@ def _koklu_ifadeler(q_num):
 #  KONU HARİTASI
 # ═══════════════════════════════════════════════
 
-TOPICS = {
+TOPICS: Dict[str, Callable[[int], Tuple[str, Any, str]]] = {
     "Temel Islemler":        _temel_islemler,
     "Sayilar":               _sayilar,
     "1. Derece Denklemler":  _birinci_derece,
@@ -379,8 +383,8 @@ TOPICS = {
 #  PDF SINIFI
 # ═══════════════════════════════════════════════
 
-class MathPDF(FPDF):
-    def __init__(self, title="Matematik Soru Bankasi"):
+class MathPDF(FPDF):  # type: ignore[misc]
+    def __init__(self, title: str = "Matematik Soru Bankasi") -> None:
         super().__init__()
         self._title = title
         try:
@@ -406,9 +410,9 @@ class MathPDF(FPDF):
 #  PDF ÜRETME
 # ═══════════════════════════════════════════════
 
-def generate_questions(selected_topics, count):
+def generate_questions(selected_topics: List[str], count: int) -> Tuple[List[str], List[Any], List[str]]:
     """Seçili konulardan belirtilen sayıda soru üret."""
-    funcs = [TOPICS[t] for t in selected_topics if t in TOPICS]
+    funcs: List[Callable[[int], Tuple[str, Any, str]]] = [TOPICS[t] for t in selected_topics if t in TOPICS]
     if not funcs:
         return [], [], []
 
@@ -422,7 +426,7 @@ def generate_questions(selected_topics, count):
     return questions, answers, solutions
 
 
-def build_pdf(questions, answers, solutions, filepath, include_solutions=False):
+def build_pdf(questions: List[str], answers: List[Any], solutions: List[str], filepath: str, include_solutions: bool = False) -> None:
     """PDF oluştur ve kaydet."""
     title = "Matematik Soru Bankasi" + (" (Cozumlu)" if include_solutions else "")
     pdf = MathPDF(title)
@@ -496,12 +500,20 @@ class MatSoruApp:
     TEXT2 = "#a0a0b0"
     SUCCESS = "#2ecc71"
 
-    def __init__(self, root):
-        self.root = root
+    def __init__(self, root: tk.Tk) -> None:
+        self.root: tk.Tk = root
         self.root.title("Matematik Soru Hazırlayıcı")
         self.root.geometry("620x700")
         self.root.resizable(False, False)
         self.root.configure(bg=self.BG)
+
+        # Pre-declare instance attributes for type checker
+        self.topic_vars: Dict[str, tk.BooleanVar] = {}
+        self.count_var: tk.IntVar = tk.IntVar(value=100)
+        self.count_entry: ttk.Entry = ttk.Entry(self.root)
+        self.solutions_var: tk.BooleanVar = tk.BooleanVar(value=True)
+        self.gen_btn: ttk.Button = ttk.Button(self.root)
+        self.status_var: tk.StringVar = tk.StringVar(value="Hazir.")
 
         # Ana stil
         style = ttk.Style()
@@ -532,7 +544,7 @@ class MatSoruApp:
 
         self._build_ui()
 
-    def _build_ui(self):
+    def _build_ui(self) -> None:
         # Başlık
         ttk.Label(self.root, text="📐 Matematik Soru Hazırlayıcı", style="Title.TLabel").pack(pady=(18, 2))
         ttk.Label(self.root, text="Konu sec, soru sayisini ayarla, PDF olustur!", style="Sub.TLabel").pack(pady=(0, 12))
@@ -541,7 +553,7 @@ class MatSoruApp:
         topic_frame = ttk.LabelFrame(self.root, text="  📋 Konu Secimi  ", padding=14)
         topic_frame.pack(fill="x", padx=24, pady=(0, 10))
 
-        self.topic_vars = {}
+        self.topic_vars.clear()
         cols = 2
         for idx, topic_name in enumerate(TOPICS):
             var = tk.BooleanVar(value=True)
@@ -564,7 +576,7 @@ class MatSoruApp:
         inner = ttk.Frame(count_frame)
         inner.pack()
 
-        self.count_var = tk.IntVar(value=100)
+        self.count_var.set(100)
 
         ttk.Button(inner, text="−10", style="Small.TButton",
                    command=lambda: self._adjust(-10)).pack(side="left", padx=4)
@@ -589,7 +601,7 @@ class MatSoruApp:
         opt_frame = ttk.LabelFrame(self.root, text="  ⚙️ Secenekler  ", padding=14)
         opt_frame.pack(fill="x", padx=24, pady=(0, 10))
 
-        self.solutions_var = tk.BooleanVar(value=True)
+        self.solutions_var.set(True)
         ttk.Checkbutton(opt_frame, text="Cozumlu PDF de olustur",
                         variable=self.solutions_var).pack(anchor="w")
 
@@ -599,19 +611,19 @@ class MatSoruApp:
         self.gen_btn.pack(pady=16)
 
         # ── Durum Çubuğu ─────────────────────
-        self.status_var = tk.StringVar(value="Hazir.")
+        self.status_var.set("Hazir.")
         ttk.Label(self.root, textvariable=self.status_var, style="Status.TLabel").pack(pady=(0, 10))
 
     # ── Yardımcı Fonksiyonlar ─────────────────
-    def _select_all(self):
+    def _select_all(self) -> None:
         for v in self.topic_vars.values():
             v.set(True)
 
-    def _deselect_all(self):
+    def _deselect_all(self) -> None:
         for v in self.topic_vars.values():
             v.set(False)
 
-    def _adjust(self, delta):
+    def _adjust(self, delta: int) -> None:
         try:
             val = self.count_var.get()
         except tk.TclError:
@@ -619,7 +631,7 @@ class MatSoruApp:
         val = max(10, min(2000, val + delta))
         self.count_var.set(val)
 
-    def _generate(self):
+    def _generate(self) -> None:
         # Seçili konuları al
         selected = [t for t, v in self.topic_vars.items() if v.get()]
         if not selected:

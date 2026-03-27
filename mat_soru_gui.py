@@ -281,7 +281,7 @@ def _mutlak_deger(q_num: int) -> Tuple[str, Any, str]:
         if isinstance(x1, int) and isinstance(x2, int):
             ans: Any = int(total)
         else:
-            ans = round(float(total), 2)
+            ans = int((float(total) * 100) + 0.5) / 100
         q = f"{q_num}) |{a}x + ({b})| = {c} => koklerin toplami kactir?"
         sol = f"x1 = {x1}, x2 = {x2}\nToplam = {x1} + {x2} = {ans}"
         return q, ans, sol
@@ -433,14 +433,14 @@ def build_pdf(questions: List[str], answers: List[Any], solutions: List[str], fi
     pdf.add_page()
     pdf.set_font(pdf._font_name, size=10)
 
-    col_width = 90
-    row_height = 35 if not include_solutions else 50
-    y_start = pdf.get_y()
+    col_width: int = 90
+    row_height: float = 35.0 if not include_solutions else 50.0
+    y_start: float = float(pdf.get_y())
 
     for i in range(0, len(questions), 2):
         if y_start + row_height > 275:
             pdf.add_page()
-            y_start = pdf.get_y()
+            y_start = float(pdf.get_y())
 
         # Sol sütun
         pdf.set_xy(10, y_start)
